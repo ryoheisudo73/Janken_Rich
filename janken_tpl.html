@@ -14,7 +14,9 @@
 </header>
 
 <main>
-  <div id="left_area">
+  <!-- 左：人間（カメラ） -->
+  <section id="human_side" class="side">
+    <h2 class="side_title">あなた</h2>
     <div id="camera_area">
       <video id="video" autoplay playsinline muted></video>
       <canvas id="overlay"></canvas>
@@ -24,18 +26,25 @@
       <li id="cho_btn"><img src = "/img/choki.png"></li>
       <li id="par_btn"><img src = "/img/pa.png"></li>
     </ul>
+  </section>
+
+  <!-- 中央：案内・スタート・掛け声・勝敗 -->
+  <section id="center_area">
+    <div id="status">カメラを準備中...</div>
+    <div id="detected">認識中の手：<span id="detected_hand">-</span></div>
+    <button id="start_btn" disabled>じゃんけんスタート</button>
+    <div id="countdown"></div>
     <div id="judgement"></div>
-  </div>
-  <div id="right_area">
-    <div id="control_area">
-      <div id="status">カメラを準備中...</div>
-      <div id="detected">認識中の手：<span id="detected_hand">-</span></div>
-      <button id="start_btn" disabled>じゃんけんスタート</button>
-      <div id="countdown"></div>
+  </section>
+
+  <!-- 右：ロボット -->
+  <section id="robo_side" class="side">
+    <h2 class="side_title">コンピュータ</h2>
+    <div id="robo_frame">
+      <img id="robo_img" src="/img/robo_draw2.jpg">
     </div>
-    <div id="pc_row">コンピュータの出した手は？<span id="pc_hands">なに？</span></div>
-    <img id="robo_img" style="display:none">
-  </div>
+    <div id="pc_row">出した手：<span id="pc_hands">なに？</span></div>
+  </section>
 </main>
 
 <footer></footer>
@@ -49,6 +58,7 @@ const resultClasses = {
     "負け": "result-lose",
     "あいこ": "result-draw"
 };
+const ROBO_DEFAULT_IMG = "robo_draw2.jpg";  // 勝負前に表示するロボット
 const roboImgs = {
     "勝ち": "robo_lost2.jpeg",
     "負け": "robo_won2.jpeg",
@@ -204,7 +214,7 @@ function loseByLate(){
     $("#pc_hands").html('<img src="' + HANDS[pc].img + '">');
     showResult("負け");
     $("#judgement").html("後出しだから負け");
-    $("#countdown").text("「" + lastCall + "」から0.2秒以内に手を出そう");
+    $("#status").text("「" + lastCall + "」から0.2秒以内に手を出そう");
 }
 
 // ===== 掛け声 =====
@@ -216,8 +226,9 @@ let lastCall = START_CALLS[2];      // 後出し判定の基準になる最後�
 // 1回分のじゃんけん：掛け声を順に表示し、最後の掛け声で手を判定
 function startRound(words){
     $("li").removeClass("gray");
-    $("#robo_img").hide();
+    $("#robo_img").attr("src", "/img/" + ROBO_DEFAULT_IMG);  // 勝負前のロボット
     $("body").removeClass("result-win result-lose result-draw");
+    $("#status").text("カメラに手をかざしてください");
     $("#judgement").text("");
     $("#pc_hands").text("なに？");
     lastCall = words[words.length - 1];
