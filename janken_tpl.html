@@ -13,8 +13,8 @@
   <!-- 左：人間（カメラ） -->
   <section id="human_side" class="side">
     <h2 class="side_title">あなた</h2>
-    <div id="human_judgement" class="judge"></div>
     <div id="camera_area">
+      <div id="human_judgement" class="judge"></div>
       <video id="video" autoplay playsinline muted></video>
       <canvas id="overlay"></canvas>
     </div>
@@ -36,8 +36,8 @@
   <!-- 右：ロボット -->
   <section id="robo_side" class="side">
     <h2 class="side_title">コンピュータ</h2>
-    <div id="robo_judgement" class="judge"></div>
     <div id="robo_frame">
+      <div id="robo_judgement" class="judge"></div>
       <img id="robo_img" src="/img/initial_v3.jpg">
     </div>
     <div id="pc_row">出した手：<span id="pc_hands">なに？</span></div>
@@ -75,7 +75,7 @@ const JUDGE_CLASSES = { "勝ち": "j-win", "負け": "j-lose", "あいこ": "j-d
 
 function setJudge(selector, text, result){
     $(selector).removeClass("j-win j-lose j-draw")
-               .text(text)
+               .html(text)
                .addClass(result ? JUDGE_CLASSES[result] : "");
 }
 function clearJudges(){
@@ -239,7 +239,7 @@ function loseByLate(){
     const pc = Math.floor(Math.random() * 3);
     $("#pc_hands").html('<img src="' + HANDS[pc].img + '">');
     setRoboImg(HANDS[pc].robo);
-    showResult("負け", "後出しだから負け");
+    showResult("負け", "<small>後出しだから</small>負け");
     $("#status").text("「" + lastCall + "」から0.2秒以内に手を出そう");
 }
 

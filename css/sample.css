@@ -6,7 +6,7 @@ body{
     min-height: 100vh;
     /* 枠(カメラ/ロボット)の幅：画面の高さに収まるよう、高さから逆算
        （タイトル・勝敗テキスト・手の画像などの分を差し引く） */
-    --frame-w: min(450px, calc(100vh - 210px));
+    --frame-w: min(450px, calc(100vh - 160px));
     background: #fff;
     transition: background 0.8s ease, color 0.8s ease;
 }
@@ -95,6 +95,7 @@ main {
 
 /* 右：ロボット（カメラと同じ枠サイズで対比させる） */
 #robo_frame {
+    position: relative;
     width: 100%;
     max-width: var(--frame-w);
     aspect-ratio: 4 / 3;
@@ -179,13 +180,32 @@ main {
 
 /* ===== 勝敗による背景演出 ===== */
 /* 勝敗テキスト（人間側・ロボット側それぞれ。文字色・動きは自分の勝敗で決まる） */
+/* カメラ枠・ロボット枠の上に大きく重ねて表示 */
 .judge {
-    font-size: clamp(28px, 6vh, 56px);
-    font-weight: bold;
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    font-size: calc(var(--frame-w) / 3.2);  /* 枠の幅に合わせて特大 */
+    font-weight: 900;
+    line-height: 1;
     text-align: center;
-    line-height: 1.2;
-    min-height: 1.2em;  /* 空でも高さを確保して、表示時にレイアウトがずれないように */
-    margin-bottom: 6px;
+    /* 白い太縁取りでカメラ映像・ロボット画像の上でも読みやすく */
+    -webkit-text-stroke: 0.08em #fff;
+    paint-order: stroke fill;
+}
+.judge:empty {
+    display: none;
+}
+/* 「後出しだから」は小さめの添え書き */
+.judge small {
+    display: block;
+    font-size: 0.32em;
+    margin-bottom: 0.15em;
 }
 
 /* 勝ち：明るく華やかな金色〜オレンジ */
@@ -228,7 +248,7 @@ body.result-lose {
     color: #cfd8e3;
 }
 .judge.j-lose {
-    color: #90a4c0;
+    color: #3f5f8f;
     animation: lose-drop 1s ease-in;
 }
 @keyframes lose-drop {
