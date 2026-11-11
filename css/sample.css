@@ -180,17 +180,22 @@ main {
 
 /* ===== 勝敗による背景演出 ===== */
 /* 勝敗テキスト（人間側・ロボット側それぞれ。文字色・動きは自分の勝敗で決まる） */
-/* カメラ枠・ロボット枠の上に大きく重ねて表示 */
+/* カメラ枠・ロボット枠の下端に帯で表示（画像の中央部分は隠さない） */
 .judge {
     position: absolute;
-    inset: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: 2;
     display: flex;
-    flex-direction: column;
     justify-content: center;
-    align-items: center;
+    align-items: baseline;
+    padding: 0.35em 0 0.1em;
     pointer-events: none;
-    font-size: calc(var(--frame-w) / 3.2);  /* 枠の幅に合わせて特大 */
+    /* 下に向かって濃くなる半透明の帯：画像は透けて見えつつ文字が読める */
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.45) 100%);
+    transform-origin: center bottom;
+    font-size: calc(var(--frame-w) / 6);  /* 枠の高さの2割強に収まる大きさ */
     font-weight: 900;
     line-height: 1;
     text-align: center;
@@ -203,9 +208,8 @@ main {
 }
 /* 「後出しだから」は小さめの添え書き */
 .judge small {
-    display: block;
-    font-size: 0.32em;
-    margin-bottom: 0.15em;
+    font-size: 0.45em;
+    margin-right: 0.2em;
 }
 
 /* 勝ち：明るく華やかな金色〜オレンジ */
