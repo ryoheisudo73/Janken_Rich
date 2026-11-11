@@ -188,11 +188,14 @@ header,
 footer {
     background-color: transparent;
 }
-#judgement {
-    font-size: 64px;
+/* 勝敗テキスト（人間側・ロボット側それぞれ。文字色・動きは自分の勝敗で決まる） */
+.judge {
+    font-size: 56px;
     font-weight: bold;
     text-align: center;
-    padding: 16px 0;
+    line-height: 1.2;
+    min-height: 1.2em;  /* 空でも高さを確保して、表示時にレイアウトがずれないように */
+    margin-bottom: 12px;
 }
 
 /* 勝ち：明るく華やかな金色〜オレンジ */
@@ -200,7 +203,7 @@ body.result-win {
     background: radial-gradient(circle at 50% 30%, #fff8c6 0%, #ffd54a 45%, #ff8a3d 100%);
     color: #5a2d00;
 }
-body.result-win #judgement {
+.judge.j-win {
     color: #d32f2f;
     text-shadow: 0 0 12px #fff, 0 0 24px #ffeb3b;
     animation: win-pop 0.8s ease-out, win-glow 1.5s ease-in-out 0.8s infinite alternate;
@@ -220,7 +223,7 @@ body.result-draw {
     background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 50%, #c5e1f5 100%);
     color: #2e4a48;
 }
-body.result-draw #judgement {
+.judge.j-draw {
     color: #00796b;
     animation: draw-sway 1.2s ease-in-out infinite alternate;
 }
@@ -234,7 +237,7 @@ body.result-lose {
     background: linear-gradient(180deg, #1c2333 0%, #2f3b52 60%, #4a5568 100%);
     color: #cfd8e3;
 }
-body.result-lose #judgement {
+.judge.j-lose {
     color: #90a4c0;
     animation: lose-drop 1s ease-in;
 }

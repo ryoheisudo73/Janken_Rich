@@ -17,6 +17,7 @@
   <!-- 左：人間（カメラ） -->
   <section id="human_side" class="side">
     <h2 class="side_title">あなた</h2>
+    <div id="human_judgement" class="judge"></div>
     <div id="camera_area">
       <video id="video" autoplay playsinline muted></video>
       <canvas id="overlay"></canvas>
@@ -34,12 +35,12 @@
     <div id="detected">認識中の手：<span id="detected_hand">-</span></div>
     <button id="start_btn" disabled>じゃんけんスタート</button>
     <div id="countdown"></div>
-    <div id="judgement"></div>
   </section>
 
   <!-- 右：ロボット -->
   <section id="robo_side" class="side">
     <h2 class="side_title">コンピュータ</h2>
+    <div id="robo_judgement" class="judge"></div>
     <div id="robo_frame">
       <img id="robo_img" src="/img/initial_v3.jpg">
     </div>
@@ -73,8 +74,24 @@ function setRoboImg(file){
     $("#robo_img").attr("src", "/img/" + file);
 }
 
-function showResult(result){
-    $("#judgement").html(result);
+// 勝敗テキストを人間側・ロボット側それぞれに表示（ロボット側は人間の逆）
+const OPPOSITE = { "勝ち": "負け", "負け": "勝ち", "あいこ": "あいこ" };
+const JUDGE_CLASSES = { "勝ち": "j-win", "負け": "j-lose", "あいこ": "j-draw" };
+
+function setJudge(selector, text, result){
+    $(selector).removeClass("j-win j-lose j-draw")
+               .text(text)
+               .addClass(result ? JUDGE_CLASSES[result] : "");
+}
+function clearJudges(){
+    setJudge("#human_judgement", "", null);
+    setJudge("#robo_judgement", "", null);
+}
+
+// result: 人間から見た勝敗 / humanText: 人間側に出す文言（省略時は result）
+function showResult(result, humanText){
+    setJudge("#human_judgement", humanText || result, result);
+    setJudge("#robo_judgement", OPPOSITE[result], OPPOSITE[result]);
     $("body").removeClass("result-win result-lose result-draw")
              .addClass(resultClasses[result]); //背景色で人間の勝敗を表現
     // ロボットは「手を出した画像」を少し見せてから勝敗のリアクションへ
@@ -227,8 +244,7 @@ function loseByLate(){
     const pc = Math.floor(Math.random() * 3);
     $("#pc_hands").html('<img src="' + HANDS[pc].img + '">');
     setRoboImg(HANDS[pc].robo);
-    showResult("負け");
-    $("#judgement").html("後出しだから負け");
+    showResult("負け", "後出しだから負け");
     $("#status").text("「" + lastCall + "」から0.2秒以内に手を出そう");
 }
 
@@ -246,7 +262,7 @@ function startRound(words){
     setRoboImg(ROBO_DEFAULT_IMG);  // 勝負前のロボット
     $("body").removeClass("result-win result-lose result-draw");
     $("#status").text("カメラに手をかざしてください");
-    $("#judgement").text("");
+    clearJudges();
     $("#pc_hands").text("なに？");
     lastCall = words[words.length - 1];
 
