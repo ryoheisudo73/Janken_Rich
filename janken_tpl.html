@@ -78,7 +78,9 @@ function play(player){
 
     // (player - pc + 3) % 3 → 0:あいこ 1:負け 2:勝ち
     const diff = (player - pc + 3) % 3;
-    showResult(["あいこ", "負け", "勝ち"][diff]);
+    const result = ["あいこ", "負け", "勝ち"][diff];
+    showResult(result);
+    return result;
 }
 
 // ===== カメラ & 手の認識 =====
@@ -183,10 +185,16 @@ function finishJudge(hand){
     clearTimeout(lateTimer);
     if (hand === null) {
         loseByLate();
-    } else {
-        play(hand);
+        $("#start_btn").prop("disabled", false);
+        return;
     }
-    $("#start_btn").prop("disabled", false);
+    const result = play(hand);
+    if (result === "あいこ") {
+        // あいこ → 結果を少し見せてから「あいこでしょ」で自動リピート
+        setTimeout(() => startRound(DRAW_CALLS), DRAW_REPEAT_DELAY_MS);
+    } else {
+        $("#start_btn").prop("disabled", false);
+    }
 }
 
 // 後出しによる負け
@@ -196,19 +204,24 @@ function loseByLate(){
     $("#pc_hands").html('<img src="' + HANDS[pc].img + '">');
     showResult("負け");
     $("#judgement").html("後出しだから負け");
-    $("#countdown").text("「ぽい！」から0.2秒以内に手を出そう");
+    $("#countdown").text("「" + lastCall + "」から0.2秒以内に手を出そう");
 }
 
-// スタートボタン：「じゃん・けん・ぽい！」のタイミングで認識中の手を出す
-$("#start_btn").on("click", function(){
-    $(this).prop("disabled", true);
+// ===== 掛け声 =====
+const START_CALLS = ["じゃん", "けん", "ぽい！"];
+const DRAW_CALLS  = ["あい", "こで", "しょ！"];
+const DRAW_REPEAT_DELAY_MS = 1000;  // あいこの結果を見せる時間
+let lastCall = START_CALLS[2];      // 後出し判定の基準になる最後の掛け声
+
+// 1回分のじゃんけん：掛け声を順に表示し、最後の掛け声で手を判定
+function startRound(words){
     $("li").removeClass("gray");
     $("#robo_img").hide();
     $("body").removeClass("result-win result-lose result-draw");
     $("#judgement").text("");
     $("#pc_hands").text("なに？");
+    lastCall = words[words.length - 1];
 
-    const words = ["じゃん", "けん", "ぽい！"];
     let i = 0;
     $("#countdown").text(words[i]);
     const timer = setInterval(() => {
@@ -219,6 +232,12 @@ $("#start_btn").on("click", function(){
             startJudge();
         }
     }, 800);
+}
+
+// スタートボタン：「じゃん・けん・ぽい！」で開始
+$("#start_btn").on("click", function(){
+    $(this).prop("disabled", true);
+    startRound(START_CALLS);
 });
 
 setup();
