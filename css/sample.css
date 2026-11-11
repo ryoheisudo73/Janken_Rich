@@ -62,12 +62,14 @@ main {
     display: contents;  /* 中身を main のグリッドに直接配置する */
 }
 /* 左列 */
-#left_area ul       { grid-area: 1 / 1; }
-#judgement          { grid-area: 2 / 1; }
-#result_img         { grid-area: 3 / 1; }
-/* 右列(画像は human と同じ3行目で水平方向を揃える) */
-#pc_row             { grid-area: 1 / 2; }
-#robo_img           { grid-area: 3 / 2; }
+#camera_area        { grid-area: 1 / 1; }
+#left_area ul       { grid-area: 2 / 1; }
+#judgement          { grid-area: 3 / 1; }
+#result_img         { grid-area: 4 / 1; }
+/* 右列(画像は human と同じ4行目で水平方向を揃える) */
+#control_area       { grid-area: 1 / 2; }
+#pc_row             { grid-area: 2 / 2; }
+#robo_img           { grid-area: 4 / 2; }
 
 #result_img,
 #robo_img {
@@ -93,3 +95,37 @@ main {
     height: auto;
 }
 
+
+/* カメラ表示（鏡のように左右反転） */
+#camera_area {
+    position: relative;
+    width: 450px;
+}
+#video,
+#overlay {
+    width: 450px;
+    height: auto;
+    transform: scaleX(-1);
+}
+#overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+#control_area {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+}
+#start_btn {
+    font-size: 28px;
+    padding: 8px 24px;
+    width: fit-content;
+    cursor: pointer;
+}
+#countdown {
+    font-size: 48px;
+    font-weight: bold;
+    color: #0066CC;
+}
