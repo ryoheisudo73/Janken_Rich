@@ -24,8 +24,7 @@
       <li id="cho_btn"><img src = "/img/choki.png"></li>
       <li id="par_btn"><img src = "/img/pa.png"></li>
     </ul>
-    <div id="judgement">勝ち</div>
-    <img id="result_img" style="display:none">
+    <div id="judgement"></div>
   </div>
   <div id="right_area">
     <div id="control_area">
@@ -44,11 +43,11 @@
 import { FilesetResolver, HandLandmarker, DrawingUtils }
   from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
 
-//勝敗の文字と画像を表示
-const resultImgs = {
-    "勝ち": "human_won.jpeg",
-    "負け": "human_lost.jpeg",
-    "あいこ": "human_draw.jpeg"
+//勝敗の文字と背景色・画像を表示
+const resultClasses = {
+    "勝ち": "result-win",
+    "負け": "result-lose",
+    "あいこ": "result-draw"
 };
 const roboImgs = {
     "勝ち": "robo_lost2.jpeg",
@@ -57,7 +56,8 @@ const roboImgs = {
 };
 function showResult(result){
     $("#judgement").html(result);
-    $("#result_img").attr("src", "/img/" + resultImgs[result]).show();
+    $("body").removeClass("result-win result-lose result-draw")
+             .addClass(resultClasses[result]); //背景色で人間の勝敗を表現
     $("#robo_img").attr("src", "/img/" + roboImgs[result]).show();
 }
 
@@ -160,7 +160,8 @@ function detectLoop(){
 $("#start_btn").on("click", function(){
     $(this).prop("disabled", true);
     $("li").removeClass("gray");
-    $("#result_img, #robo_img").hide();
+    $("#robo_img").hide();
+    $("body").removeClass("result-win result-lose result-draw");
     $("#judgement").text("");
     $("#pc_hands").text("なに？");
 
