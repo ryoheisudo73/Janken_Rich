@@ -90,10 +90,80 @@ main {
     overflow-wrap: anywhere;  /* 長いメッセージでも列幅を広げない */
     align-self: center;  /* 画面の縦中央に配置 */
 }
+/* スタートボタン：ポップなキャンディ風。押せる間はぴょこぴょこ跳ねて誘う */
 #start_btn {
-    font-size: 28px;
-    padding: 8px 24px;
+    font-family: inherit;
+    font-size: clamp(18px, 3vh, 26px);
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    color: #fff;
+    padding: 0.55em 1.3em 0.6em;
+    border: 4px solid #fff;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #ff5f8f 0%, #ff9a3c 50%, #ffd23f 100%);
+    background-size: 200% 200%;
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+    box-shadow: 0 6px 0 #c2185b, 0 10px 20px rgba(0, 0, 0, 0.25);
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    animation: btn-bounce 1.6s ease-in-out infinite, btn-shine 3s linear infinite;
+}
+#start_btn .btn_icons {
+    display: flex;
+    gap: 0.4em;
+}
+#start_btn .btn_icon {
+    display: inline-block;
+    font-size: 1.1em;
+    text-shadow: none;
+    animation: icon-wiggle 1.2s ease-in-out infinite;
+}
+#start_btn .btn_icon:nth-child(2) { animation-delay: 0.15s; }
+#start_btn .btn_icon:nth-child(3) { animation-delay: 0.3s; }
+#start_btn .btn_label {
+    display: block;
+    white-space: nowrap;
+}
+/* ホバー：少し大きく */
+#start_btn:hover:not(:disabled) {
+    transform: scale(1.06) rotate(-2deg);
+    animation-play-state: paused;
+}
+/* 押した瞬間：沈み込む */
+#start_btn:active:not(:disabled) {
+    transform: translateY(5px) scale(0.98);
+    box-shadow: 0 1px 0 #c2185b, 0 3px 8px rgba(0, 0, 0, 0.25);
+}
+/* 押せない間（準備中・勝負中）：グレーで静止 */
+#start_btn:disabled {
+    cursor: default;
+    background: #cfcfcf;
+    color: #f5f5f5;
+    box-shadow: 0 6px 0 #9e9e9e;
+    animation: none;
+    opacity: 0.8;
+}
+#start_btn:disabled .btn_icon {
+    animation: none;
+    filter: grayscale(100%);
+}
+@keyframes btn-bounce {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+}
+@keyframes btn-shine {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+@keyframes icon-wiggle {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    25%      { transform: rotate(-15deg) scale(1.1); }
+    75%      { transform: rotate(15deg) scale(1.1); }
 }
 #countdown {
     font-size: clamp(64px, 15vh, 120px);  /* 掛け声は大きく */
