@@ -1,0 +1,95 @@
+body{
+    margin:0;
+    padding:0;
+    text-align:left;
+    font-size: 32px;
+}
+header{
+    background-color: #fff;
+    border-bottom: 1px solid #ccc;
+    text-align: center;
+}
+main{
+    border-bottom:1px solid #ccc;
+}
+footer{
+    background-color: #fff;
+    border-bottom:1px solid #ccc;
+    text-align: center;
+}
+p{
+    font-size:200%;
+    text-align: center;
+    border-bottom:1px solid #fff;
+    height:200px;
+}
+ul{
+    padding: 0;
+    border-top: 1px solid #000000;
+    display:table;  /* 定義 */
+    table-layout: fixed;
+    width:450px;  /* 150px × 3ボタン */
+}
+li{
+    text-align: center;
+    list-style-type:none;
+    border: 1px solid #666;
+    background-color: #FFF;
+    display:table-cell;  /* 定義 */
+    cursor: pointer;
+}
+li:hover{
+    background: #0066CC;
+    color:#fff;
+}
+
+li.gray,
+li.gray:hover{
+    background: #ccc;
+    color:#999;
+}
+li.gray img{
+    opacity: 0.4;
+    filter: grayscale(100%);
+}
+
+main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+#left_area,
+#right_area {
+    display: contents;  /* 中身を main のグリッドに直接配置する */
+}
+/* 左列 */
+#left_area ul       { grid-area: 1 / 1; }
+#judgement          { grid-area: 2 / 1; }
+#result_img         { grid-area: 3 / 1; }
+/* 右列(画像は human と同じ3行目で水平方向を揃える) */
+#pc_row             { grid-area: 1 / 2; }
+#robo_img           { grid-area: 3 / 2; }
+
+#result_img,
+#robo_img {
+    width: 200px;
+    height: auto;
+}
+
+#pc_row {
+    display: flex;
+    align-items: center;  /* 文字と画像を縦方向センタリング */
+}
+
+#gu_btn,
+#cho_btn,
+#par_btn {
+    width: 150px;
+}
+#gu_btn img,
+#cho_btn img,
+#par_btn img,
+#pc_hands img {
+    width: 150px;
+    height: auto;
+}
+
