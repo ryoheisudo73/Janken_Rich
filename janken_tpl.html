@@ -61,10 +61,10 @@ const resultClasses = {
 // ===== ロボットの画像 =====
 const ROBO_DEFAULT_IMG = "initial_v3.jpg";  // 勝負前（初期）
 // キーは「人間から見た」勝敗。人間の勝ち = ロボットの負け
+// あいこはリアクション画像なし（出した手の画像のまま、すぐ次の勝負へ）
 const roboImgs = {
     "勝ち": "lose_v3.jpg",
-    "負け": "win_v3.jpg",
-    "あいこ": "draw_v3.jpg"
+    "負け": "win_v3.jpg"
 };
 const ROBO_REACTION_DELAY_MS = 700;  // 手を出した画像 → 勝敗の画像に切り替えるまで
 let roboTimer = null;
@@ -79,7 +79,9 @@ function showResult(result){
              .addClass(resultClasses[result]); //背景色で人間の勝敗を表現
     // ロボットは「手を出した画像」を少し見せてから勝敗のリアクションへ
     clearTimeout(roboTimer);
-    roboTimer = setTimeout(() => setRoboImg(roboImgs[result]), ROBO_REACTION_DELAY_MS);
+    if (roboImgs[result]) {
+        roboTimer = setTimeout(() => setRoboImg(roboImgs[result]), ROBO_REACTION_DELAY_MS);
+    }
 }
 
 // 手の定義 (0:グー 1:チョキ 2:パー)  robo: ロボットがその手を出した画像
@@ -233,7 +235,7 @@ function loseByLate(){
 // ===== 掛け声 =====
 const START_CALLS = ["じゃん", "けん", "ぽい！"];
 const DRAW_CALLS  = ["あい", "こで", "しょ！"];
-const DRAW_REPEAT_DELAY_MS = 1500;  // あいこの結果を見せる時間（ロボットのあいこ画像が見えるように）
+const DRAW_REPEAT_DELAY_MS = 600;   // あいこの結果を見せてから「あいこでしょ」に入るまで
 let lastCall = START_CALLS[2];      // 後出し判定の基準になる最後の掛け声
 
 // 1回分のじゃんけん：掛け声を順に表示し、最後の掛け声で手を判定
