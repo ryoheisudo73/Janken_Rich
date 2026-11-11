@@ -194,33 +194,39 @@ function detectLoop(){
         }
         $("#detected_hand").text(currentHand === null ? "-" : HANDS[currentHand].name);
 
-        // 「ぽい！」の受付時間中に手を認識したら、その手で勝負
-        if (judging && currentHand !== null) {
+        // 正式な手のタイミングで認識できず待っている間に、手を認識したらその手で勝負
+        if (waitingLate && currentHand !== null) {
             finishJudge(currentHand);
         }
     }
     requestAnimationFrame(detectLoop);
 }
 
-// ===== 後出し判定 =====
-const LATE_LIMIT_MS = 200;  // 「ぽい！」から手を出すまでの猶予
-let judging = false;        // 手の受付中かどうか
+// ===== 手の確定 & 後出し判定 =====
+const JUDGE_DELAY_MS = 200;  // 「ぽい！」「しょ！」から何秒後の認識結果を正式な手にするか
+const LATE_LIMIT_MS = 300;   // この時間までに手が出ていなければ「後出し」で負け
+let waitingLate = false;     // 正式な手が取れず、後出し判定の期限まで待っている状態
 let lateTimer = null;
 
-// 「ぽい！」の瞬間に呼ぶ：すでに手が出ていれば即勝負、なければ0.2秒だけ待つ
+// 「ぽい！」「しょ！」の瞬間に呼ぶ
+//   0.2秒後：認識している手があれば、それを正式な手として確定
+//   0.2〜0.3秒：まだ手がなければ待ち、認識できた時点でその手で勝負
+//   0.3秒後：それでも手がなければ「後出し」で負け
 function startJudge(){
-    judging = true;
-    if (currentHand !== null) {
-        finishJudge(currentHand);
-        return;
-    }
-    lateTimer = setTimeout(() => {
-        if (judging) finishJudge(null);  // 0.2秒以内に手が出なかった
-    }, LATE_LIMIT_MS);
+    setTimeout(() => {
+        if (currentHand !== null) {
+            finishJudge(currentHand);
+            return;
+        }
+        waitingLate = true;
+        lateTimer = setTimeout(() => {
+            if (waitingLate) finishJudge(null);
+        }, LATE_LIMIT_MS - JUDGE_DELAY_MS);
+    }, JUDGE_DELAY_MS);
 }
 
 function finishJudge(hand){
-    judging = false;
+    waitingLate = false;
     clearTimeout(lateTimer);
     if (hand === null) {
         loseByLate();
@@ -243,7 +249,7 @@ function loseByLate(){
     setHandImg("#pc_hand", pc);
     setRoboImg(HANDS[pc].robo);
     showResult("負け", "<small>後出しだから</small>負け");
-    $("#status").text("「" + lastCall + "」から0.2秒以内に手を出そう");
+    $("#status").text("「" + lastCall + "」と同時に手を出そう");
 }
 
 // ===== 掛け声 =====
