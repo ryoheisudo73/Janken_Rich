@@ -152,11 +152,54 @@ function detectLoop(){
             currentHand = null;
         }
         $("#detected_hand").text(currentHand === null ? "-" : HANDS[currentHand].name);
+
+        // 「ぽい！」の受付時間中に手を認識したら、その手で勝負
+        if (judging && currentHand !== null) {
+            finishJudge(currentHand);
+        }
     }
     requestAnimationFrame(detectLoop);
 }
 
-// スタートボタン：「じゃん・けん・ぽん！」のタイミングで認識中の手を出す
+// ===== 後出し判定 =====
+const LATE_LIMIT_MS = 200;  // 「ぽい！」から手を出すまでの猶予
+let judging = false;        // 手の受付中かどうか
+let lateTimer = null;
+
+// 「ぽい！」の瞬間に呼ぶ：すでに手が出ていれば即勝負、なければ0.2秒だけ待つ
+function startJudge(){
+    judging = true;
+    if (currentHand !== null) {
+        finishJudge(currentHand);
+        return;
+    }
+    lateTimer = setTimeout(() => {
+        if (judging) finishJudge(null);  // 0.2秒以内に手が出なかった
+    }, LATE_LIMIT_MS);
+}
+
+function finishJudge(hand){
+    judging = false;
+    clearTimeout(lateTimer);
+    if (hand === null) {
+        loseByLate();
+    } else {
+        play(hand);
+    }
+    $("#start_btn").prop("disabled", false);
+}
+
+// 後出しによる負け
+function loseByLate(){
+    $("li").addClass("gray");  // 人間の手はなし
+    const pc = Math.floor(Math.random() * 3);
+    $("#pc_hands").html('<img src="' + HANDS[pc].img + '">');
+    showResult("負け");
+    $("#judgement").html("後出しだから負け");
+    $("#countdown").text("「ぽい！」から0.2秒以内に手を出そう");
+}
+
+// スタートボタン：「じゃん・けん・ぽい！」のタイミングで認識中の手を出す
 $("#start_btn").on("click", function(){
     $(this).prop("disabled", true);
     $("li").removeClass("gray");
@@ -165,7 +208,7 @@ $("#start_btn").on("click", function(){
     $("#judgement").text("");
     $("#pc_hands").text("なに？");
 
-    const words = ["じゃん", "けん", "ぽん！"];
+    const words = ["じゃん", "けん", "ぽい！"];
     let i = 0;
     $("#countdown").text(words[i]);
     const timer = setInterval(() => {
@@ -173,12 +216,7 @@ $("#start_btn").on("click", function(){
         $("#countdown").text(words[i]);
         if (i === words.length - 1) {
             clearInterval(timer);
-            if (currentHand === null) {
-                $("#countdown").text("手が認識できませんでした。もう一度！");
-            } else {
-                play(currentHand);
-            }
-            $("#start_btn").prop("disabled", false);
+            startJudge();
         }
     }, 800);
 });
