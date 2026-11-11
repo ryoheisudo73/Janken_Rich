@@ -236,7 +236,7 @@ function loseByLate(){
 const START_CALLS = ["じゃん", "けん", "ぽい！"];
 const DRAW_CALLS  = ["あい", "こで", "しょ！"];
 const CALL_INTERVAL_MS = 800;       // 掛け声の間隔
-const DRAW_REPEAT_DELAY_MS = 600;  // あいこの結果を見せてから「あいこでしょ」に入るまで
+const DRAW_REPEAT_DELAY_MS = 1500; // あいこの結果を見せてから「あいこでしょ」に入るまで
 let lastCall = START_CALLS[2];      // 後出し判定の基準になる最後の掛け声
 
 // 1回分のじゃんけん：掛け声を順に表示し、最後の掛け声で手を判定
