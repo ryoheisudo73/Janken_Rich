@@ -235,7 +235,8 @@ function loseByLate(){
 // ===== 掛け声 =====
 const START_CALLS = ["じゃん", "けん", "ぽい！"];
 const DRAW_CALLS  = ["あい", "こで", "しょ！"];
-const DRAW_REPEAT_DELAY_MS = 600;   // あいこの結果を見せてから「あいこでしょ」に入るまで
+const CALL_INTERVAL_MS = 800;       // 掛け声の間隔
+const DRAW_REPEAT_DELAY_MS = 600;  // あいこの結果を見せてから「あいこでしょ」に入るまで
 let lastCall = START_CALLS[2];      // 後出し判定の基準になる最後の掛け声
 
 // 1回分のじゃんけん：掛け声を順に表示し、最後の掛け声で手を判定
@@ -250,15 +251,26 @@ function startRound(words){
     lastCall = words[words.length - 1];
 
     let i = 0;
-    $("#countdown").text(words[i]);
+    showCall(words[i], false);
     const timer = setInterval(() => {
         i++;
-        $("#countdown").text(words[i]);
-        if (i === words.length - 1) {
+        const isLast = (i === words.length - 1);
+        showCall(words[i], isLast);
+        if (isLast) {
             clearInterval(timer);
             startJudge();
         }
-    }, 800);
+    }, CALL_INTERVAL_MS);
+}
+
+// 掛け声を1つ表示する（アニメーションを毎回最初から再生）
+//   途中の掛け声：ポンと出てフェードアウト → 次の掛け声との区切りがはっきりする
+//   最後の掛け声：赤く大きくドンと出て、そのまま残る → 「ここで手を出す」瞬間がわかる
+function showCall(word, isLast){
+    const $c = $("#countdown");
+    $c.removeClass("call call-last");
+    void $c[0].offsetWidth;  // リフローさせてアニメーションをリセット
+    $c.text(word).addClass(isLast ? "call-last" : "call");
 }
 
 // スタートボタン：「じゃん・けん・ぽい！」で開始

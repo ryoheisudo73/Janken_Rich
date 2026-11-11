@@ -148,6 +148,27 @@ main {
     color: #0066CC;
 }
 
+/* 掛け声アニメーション */
+/* じゃん・けん / あい・こで：ポンと拡大して出て、間隔(0.8秒)内にフェードアウト */
+#countdown.call {
+    animation: call-pop-fade 0.75s ease-out forwards;
+}
+@keyframes call-pop-fade {
+    0%   { transform: scale(0.4); opacity: 0; }
+    20%  { transform: scale(1.15); opacity: 1; }
+    35%  { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0.9); opacity: 0; }
+}
+/* ぽい！ / しょ！：赤く大きく叩きつけるように出て、そのまま残る */
+#countdown.call-last {
+    color: #e53935;
+    animation: call-stamp 0.35s cubic-bezier(.2, 1.6, .4, 1) forwards;
+}
+@keyframes call-stamp {
+    0%   { transform: scale(2.2); opacity: 0; }
+    100% { transform: scale(1);   opacity: 1; }
+}
+
 /* 手の画像 */
 #gu_btn,
 #cho_btn,
