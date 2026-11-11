@@ -2,23 +2,13 @@ body{
     margin:0;
     padding:0;
     text-align:left;
-    font-size: 32px;
+    font-size: clamp(18px, 3.2vh, 30px);
     min-height: 100vh;
+    /* 枠(カメラ/ロボット)の幅：画面の高さに収まるよう、高さから逆算
+       （タイトル・勝敗テキスト・手の画像などの分を差し引く） */
+    --frame-w: min(450px, calc(100vh - 210px));
     background: #fff;
     transition: background 0.8s ease, color 0.8s ease;
-}
-header{
-    background-color: #fff;
-    border-bottom: 1px solid #ccc;
-    text-align: center;
-}
-main{
-    border-bottom:1px solid #ccc;
-}
-footer{
-    background-color: #fff;
-    border-bottom:1px solid #ccc;
-    text-align: center;
 }
 p{
     font-size:200%;
@@ -28,10 +18,10 @@ p{
 }
 ul{
     padding: 0;
+    margin: 8px 0 0;
     border-top: 1px solid #000000;
     display:table;  /* 定義 */
     table-layout: fixed;
-    width:450px;  /* 150px × 3ボタン */
 }
 li{
     text-align: center;
@@ -59,10 +49,12 @@ li.gray img{
 /* ===== レイアウト：左=人間(カメラ) / 中央=操作 / 右=ロボット ===== */
 main {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(280px, auto) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) clamp(240px, 24vw, 360px) minmax(0, 1fr);
     align-items: start;
     gap: 24px;
-    padding: 24px;
+    padding: 16px 24px;
+    box-sizing: border-box;
+    min-height: 100vh;
 }
 .side {
     display: flex;
@@ -70,15 +62,15 @@ main {
     align-items: center;
 }
 .side_title {
-    margin: 0 0 12px;
-    font-size: 36px;
+    margin: 0 0 4px;
+    font-size: clamp(20px, 4vh, 36px);
 }
 
 /* 左：カメラ（鏡のように左右反転） */
 #camera_area {
     position: relative;
     width: 100%;
-    max-width: 450px;
+    max-width: var(--frame-w);
     aspect-ratio: 4 / 3;
     background: #000;
     border-radius: 12px;
@@ -98,13 +90,13 @@ main {
 }
 #human_side ul {
     width: 100%;
-    max-width: 450px;
+    max-width: var(--frame-w);
 }
 
 /* 右：ロボット（カメラと同じ枠サイズで対比させる） */
 #robo_frame {
     width: 100%;
-    max-width: 450px;
+    max-width: var(--frame-w);
     aspect-ratio: 4 / 3;
     background: #fff;
     border-radius: 12px;
@@ -121,7 +113,7 @@ main {
 #pc_row {
     display: flex;
     align-items: center;  /* 文字と画像を縦方向センタリング */
-    margin-top: 16px;
+    margin-top: 8px;
 }
 
 /* 中央：案内・スタート・掛け声・勝敗 */
@@ -132,8 +124,9 @@ main {
     justify-content: center;
     text-align: center;
     gap: 16px;
-    min-height: 400px;
-    padding-top: 60px;
+    min-width: 0;
+    overflow-wrap: anywhere;  /* 長いメッセージでも列幅を広げない */
+    align-self: center;  /* 画面の縦中央に配置 */
 }
 #start_btn {
     font-size: 28px;
@@ -141,7 +134,7 @@ main {
     cursor: pointer;
 }
 #countdown {
-    font-size: 120px;  /* 掛け声は大きく */
+    font-size: clamp(64px, 15vh, 120px);  /* 掛け声は大きく */
     font-weight: bold;
     line-height: 1.1;
     min-height: 1.1em;
@@ -170,32 +163,29 @@ main {
 }
 
 /* 手の画像 */
-#gu_btn,
-#cho_btn,
-#par_btn {
-    width: 150px;
-}
+/* 手の画像：枠の幅の1/3（3つ並べると枠と同じ幅） */
 #gu_btn img,
 #cho_btn img,
-#par_btn img,
+#par_btn img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
 #pc_hands img {
-    width: 150px;
+    display: block;
+    width: calc(var(--frame-w) / 3);
     height: auto;
 }
 
 /* ===== 勝敗による背景演出 ===== */
-header,
-footer {
-    background-color: transparent;
-}
 /* 勝敗テキスト（人間側・ロボット側それぞれ。文字色・動きは自分の勝敗で決まる） */
 .judge {
-    font-size: 56px;
+    font-size: clamp(28px, 6vh, 56px);
     font-weight: bold;
     text-align: center;
     line-height: 1.2;
     min-height: 1.2em;  /* 空でも高さを確保して、表示時にレイアウトがずれないように */
-    margin-bottom: 12px;
+    margin-bottom: 6px;
 }
 
 /* 勝ち：明るく華やかな金色〜オレンジ */
