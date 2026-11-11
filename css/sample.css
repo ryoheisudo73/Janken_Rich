@@ -16,36 +16,6 @@ p{
     border-bottom:1px solid #fff;
     height:200px;
 }
-ul{
-    padding: 0;
-    margin: 8px 0 0;
-    border-top: 1px solid #000000;
-    display:table;  /* 定義 */
-    table-layout: fixed;
-}
-li{
-    text-align: center;
-    list-style-type:none;
-    border: 1px solid #666;
-    background-color: #FFF;
-    display:table-cell;  /* 定義 */
-    cursor: pointer;
-}
-li:hover{
-    background: #0066CC;
-    color:#fff;
-}
-
-li.gray,
-li.gray:hover{
-    background: #ccc;
-    color:#999;
-}
-li.gray img{
-    opacity: 0.4;
-    filter: grayscale(100%);
-}
-
 /* ===== レイアウト：左=人間(カメラ) / 中央=操作 / 右=ロボット ===== */
 main {
     display: grid;
@@ -88,10 +58,6 @@ main {
     top: 0;
     left: 0;
 }
-#human_side ul {
-    width: 100%;
-    max-width: var(--frame-w);
-}
 
 /* 右：ロボット（カメラと同じ枠サイズで対比させる） */
 #robo_frame {
@@ -110,11 +76,6 @@ main {
     height: 100%;
     width: auto;
     object-fit: contain;
-}
-#pc_row {
-    display: flex;
-    align-items: center;  /* 文字と画像を縦方向センタリング */
-    margin-top: 8px;
 }
 
 /* 中央：案内・スタート・掛け声・勝敗 */
@@ -163,19 +124,23 @@ main {
     100% { transform: scale(1);   opacity: 1; }
 }
 
-/* 手の画像 */
-/* 手の画像：枠の幅の1/3（3つ並べると枠と同じ幅） */
-#gu_btn img,
-#cho_btn img,
-#par_btn img {
-    display: block;
-    width: 100%;
-    height: auto;
+/* 出した手の画像（あなた・コンピュータ共通。出した1つだけを枠の下中央に表示） */
+.hand_slot {
+    height: calc(var(--frame-w) / 4);  /* 手が出ていない間も高さを確保して左右を揃える */
+    margin-top: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
-#pc_hands img {
-    display: block;
-    width: calc(var(--frame-w) / 3);
-    height: auto;
+.hand_slot img {
+    height: 100%;
+    width: auto;
+    border-radius: 12px;  /* 白背景の画像なので、枠と同じ角丸に */
+    animation: hand-pop 0.3s cubic-bezier(.2, 1.6, .4, 1);
+}
+@keyframes hand-pop {
+    0%   { transform: scale(0.3); opacity: 0; }
+    100% { transform: scale(1);   opacity: 1; }
 }
 
 /* ===== 勝敗による背景演出 ===== */
@@ -259,7 +224,6 @@ body.result-lose {
     0%   { transform: translateY(-30px); opacity: 0; }
     100% { transform: translateY(0); opacity: 1; }
 }
-body.result-lose li img,
-body.result-lose #pc_hands img {
+body.result-lose .hand_slot img {
     filter: brightness(0.85);
 }

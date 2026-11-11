@@ -18,11 +18,7 @@
       <video id="video" autoplay playsinline muted></video>
       <canvas id="overlay"></canvas>
     </div>
-    <ul>
-      <li id="gu_btn"><img src = "/img/gu2.png"></li>
-      <li id="cho_btn"><img src = "/img/choki.png"></li>
-      <li id="par_btn"><img src = "/img/pa.png"></li>
-    </ul>
+    <div id="human_hand" class="hand_slot"></div>
   </section>
 
   <!-- 中央：案内・スタート・掛け声・勝敗 -->
@@ -40,7 +36,7 @@
       <div id="robo_judgement" class="judge"></div>
       <img id="robo_img" src="/img/initial_v3.jpg">
     </div>
-    <div id="pc_row">出した手：<span id="pc_hands">なに？</span></div>
+    <div id="pc_hand" class="hand_slot"></div>
   </section>
 </main>
 
@@ -98,18 +94,22 @@ function showResult(result, humanText){
 
 // 手の定義 (0:グー 1:チョキ 2:パー)  robo: ロボットがその手を出した画像
 const HANDS = [
-    { name: "グー",   btn: "#gu_btn",  img: "/img/gu2.png",   robo: "gu_v3.jpg"    },
-    { name: "チョキ", btn: "#cho_btn", img: "/img/choki.png", robo: "choki_v3.jpg" },
-    { name: "パー",   btn: "#par_btn", img: "/img/pa.png",    robo: "par_v3.jpg"   }
+    { name: "グー",   img: "/img/gu2.png",   robo: "gu_v3.jpg"    },
+    { name: "チョキ", img: "/img/choki.png", robo: "choki_v3.jpg" },
+    { name: "パー",   img: "/img/pa.png",    robo: "par_v3.jpg"   }
 ];
+
+// 出した手の画像を表示（hand が null なら空にする）
+function setHandImg(selector, hand){
+    $(selector).html(hand === null ? "" : '<img src="' + HANDS[hand].img + '" alt="' + HANDS[hand].name + '">');
+}
 
 // じゃんけん本体：player = 0/1/2
 function play(player){
-    $("li").addClass("gray");
-    $(HANDS[player].btn).removeClass("gray");
+    setHandImg("#human_hand", player);
 
     const pc = Math.floor(Math.random() * 3);
-    $("#pc_hands").html('<img src="' + HANDS[pc].img + '">');
+    setHandImg("#pc_hand", pc);
     setRoboImg(HANDS[pc].robo);
 
     // (player - pc + 3) % 3 → 0:あいこ 1:負け 2:勝ち
@@ -235,9 +235,9 @@ function finishJudge(hand){
 
 // 後出しによる負け
 function loseByLate(){
-    $("li").addClass("gray");  // 人間の手はなし
+    setHandImg("#human_hand", null);  // 人間の手はなし
     const pc = Math.floor(Math.random() * 3);
-    $("#pc_hands").html('<img src="' + HANDS[pc].img + '">');
+    setHandImg("#pc_hand", pc);
     setRoboImg(HANDS[pc].robo);
     showResult("負け", "<small>後出しだから</small>負け");
     $("#status").text("「" + lastCall + "」から0.2秒以内に手を出そう");
@@ -252,13 +252,13 @@ let lastCall = START_CALLS[2];      // 後出し判定の基準になる最後�
 
 // 1回分のじゃんけん：掛け声を順に表示し、最後の掛け声で手を判定
 function startRound(words){
-    $("li").removeClass("gray");
+    setHandImg("#human_hand", null);
+    setHandImg("#pc_hand", null);
     clearTimeout(roboTimer);
     setRoboImg(ROBO_DEFAULT_IMG);  // 勝負前のロボット
     $("body").removeClass("result-win result-lose result-draw");
     $("#status").text("カメラに手をかざしてください");
     clearJudges();
-    $("#pc_hands").text("なに？");
     lastCall = words[words.length - 1];
 
     let i = 0;
