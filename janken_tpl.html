@@ -41,7 +41,7 @@
   <section id="robo_side" class="side">
     <h2 class="side_title">コンピュータ</h2>
     <div id="robo_frame">
-      <img id="robo_img" src="/img/robo_draw2.jpg">
+      <img id="robo_img" src="/img/initial_v3.jpg">
     </div>
     <div id="pc_row">出した手：<span id="pc_hands">なに？</span></div>
   </section>
@@ -58,24 +58,35 @@ const resultClasses = {
     "負け": "result-lose",
     "あいこ": "result-draw"
 };
-const ROBO_DEFAULT_IMG = "robo_draw2.jpg";  // 勝負前に表示するロボット
+// ===== ロボットの画像 =====
+const ROBO_DEFAULT_IMG = "initial_v3.jpg";  // 勝負前（初期）
+// キーは「人間から見た」勝敗。人間の勝ち = ロボットの負け
 const roboImgs = {
-    "勝ち": "robo_lost2.jpeg",
-    "負け": "robo_won2.jpeg",
-    "あいこ": "robo_draw2.jpg"
+    "勝ち": "lose_v3.jpg",
+    "負け": "win_v3.jpg",
+    "あいこ": "draw_v3.jpg"
 };
+const ROBO_REACTION_DELAY_MS = 700;  // 手を出した画像 → 勝敗の画像に切り替えるまで
+let roboTimer = null;
+
+function setRoboImg(file){
+    $("#robo_img").attr("src", "/img/" + file);
+}
+
 function showResult(result){
     $("#judgement").html(result);
     $("body").removeClass("result-win result-lose result-draw")
              .addClass(resultClasses[result]); //背景色で人間の勝敗を表現
-    $("#robo_img").attr("src", "/img/" + roboImgs[result]).show();
+    // ロボットは「手を出した画像」を少し見せてから勝敗のリアクションへ
+    clearTimeout(roboTimer);
+    roboTimer = setTimeout(() => setRoboImg(roboImgs[result]), ROBO_REACTION_DELAY_MS);
 }
 
-// 手の定義 (0:グー 1:チョキ 2:パー)
+// 手の定義 (0:グー 1:チョキ 2:パー)  robo: ロボットがその手を出した画像
 const HANDS = [
-    { name: "グー",   btn: "#gu_btn",  img: "/img/gu2.png"   },
-    { name: "チョキ", btn: "#cho_btn", img: "/img/choki.png" },
-    { name: "パー",   btn: "#par_btn", img: "/img/pa.png"    }
+    { name: "グー",   btn: "#gu_btn",  img: "/img/gu2.png",   robo: "gu_v3.jpg"    },
+    { name: "チョキ", btn: "#cho_btn", img: "/img/choki.png", robo: "choki_v3.jpg" },
+    { name: "パー",   btn: "#par_btn", img: "/img/pa.png",    robo: "par_v3.jpg"   }
 ];
 
 // じゃんけん本体：player = 0/1/2
@@ -85,6 +96,7 @@ function play(player){
 
     const pc = Math.floor(Math.random() * 3);
     $("#pc_hands").html('<img src="' + HANDS[pc].img + '">');
+    setRoboImg(HANDS[pc].robo);
 
     // (player - pc + 3) % 3 → 0:あいこ 1:負け 2:勝ち
     const diff = (player - pc + 3) % 3;
@@ -212,6 +224,7 @@ function loseByLate(){
     $("li").addClass("gray");  // 人間の手はなし
     const pc = Math.floor(Math.random() * 3);
     $("#pc_hands").html('<img src="' + HANDS[pc].img + '">');
+    setRoboImg(HANDS[pc].robo);
     showResult("負け");
     $("#judgement").html("後出しだから負け");
     $("#status").text("「" + lastCall + "」から0.2秒以内に手を出そう");
@@ -220,13 +233,14 @@ function loseByLate(){
 // ===== 掛け声 =====
 const START_CALLS = ["じゃん", "けん", "ぽい！"];
 const DRAW_CALLS  = ["あい", "こで", "しょ！"];
-const DRAW_REPEAT_DELAY_MS = 1000;  // あいこの結果を見せる時間
+const DRAW_REPEAT_DELAY_MS = 1500;  // あいこの結果を見せる時間（ロボットのあいこ画像が見えるように）
 let lastCall = START_CALLS[2];      // 後出し判定の基準になる最後の掛け声
 
 // 1回分のじゃんけん：掛け声を順に表示し、最後の掛け声で手を判定
 function startRound(words){
     $("li").removeClass("gray");
-    $("#robo_img").attr("src", "/img/" + ROBO_DEFAULT_IMG);  // 勝負前のロボット
+    clearTimeout(roboTimer);
+    setRoboImg(ROBO_DEFAULT_IMG);  // 勝負前のロボット
     $("body").removeClass("result-win result-lose result-draw");
     $("#status").text("カメラに手をかざしてください");
     $("#judgement").text("");
