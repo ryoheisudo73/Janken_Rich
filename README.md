@@ -1,14 +1,12 @@
-# Janken_Rich
-Gs課題
 # ①課題名
 じゃんけんアプリRich ver
 
 ## ②課題内容（どんな作品か）
 - Webカメラで捉えた手の形状からグーチョキパーを判定し、じゃんけんができます
 - 画像認識にMediaPipeライブラリを利用しており、ブラウザが自動で下記を読み取っています。
-    ・MediaPipe 本体（JavaScript）
-    ・手を認識する処理（WebAssembly）
-    ・手の認識モデル
+    - MediaPipe 本体（JavaScript）
+    - 手を認識する処理（WebAssembly）
+    - 手の認識モデル
 
 ## ③アプリのデプロイURL
 デプロイしている場合はURLを記入（任意）
