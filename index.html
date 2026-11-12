@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<script src="js/jquery-2.1.3.min.js"></script>
+<link rel="stylesheet" href="css/sample.css">
+<title>じゃんけん</title>
+</head>
+<body>
+
+<main>
+  <!-- 左：人間（カメラ） -->
+  <section id="human_side" class="side">
+    <h2 class="side_title">あなた</h2>
+    <div id="camera_area">
+      <div id="human_judgement" class="judge"></div>
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="overlay"></canvas>
+    </div>
+    <div id="human_hand" class="hand_slot"></div>
+  </section>
+
+  <!-- 中央：案内・スタート・掛け声・勝敗 -->
+  <section id="center_area">
+    <div id="status">カメラを準備中...</div>
+    <div id="detected">認識中の手：<span id="detected_hand">-</span></div>
+    <button id="start_btn" disabled>
+      <span class="btn_icons"><span class="btn_icon">✊</span><span class="btn_icon">✌️</span><span class="btn_icon">✋</span></span>
+      <span class="btn_label">じゃんけんスタート！</span>
+    </button>
+    <div id="countdown"></div>
+  </section>
+
+  <!-- 右：ロボット -->
+  <section id="robo_side" class="side">
+    <h2 class="side_title">コンピュータ</h2>
+    <div id="robo_frame">
+      <div id="robo_judgement" class="judge"></div>
+      <img id="robo_img" src="img/initial_v3.jpg">
+    </div>
+    <div id="pc_hand" class="hand_slot"></div>
+  </section>
+</main>
+
+<script type="module">
+import { FilesetResolver, HandLandmarker, DrawingUtils }
+  from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+
+//勝敗の文字と背景色・画像を表示
+const resultClasses = {
+    "勝ち": "result-win",
+    "負け": "result-lose",
+    "あいこ": "result-draw"
+};
+// ===== ロボットの画像 =====
+const ROBO_DEFAULT_IMG = "initial_v3.jpg";  // 勝負前（初期）
+// キーは「人間から見た」勝敗。人間の勝ち = ロボットの負け
+// あいこはリアクション画像なし（出した手の画像のまま、すぐ次の勝負へ）
+const roboImgs = {
+    "勝ち": "lose_v3.jpg",
+    "負け": "win_v3.jpg"
+};
+const ROBO_REACTION_DELAY_MS = 1500; // 手を出した画像 → 勝敗の画像に切り替えるまで
+let roboTimer = null;
+
+function setRoboImg(file){
+    $("#robo_img").attr("src", "img/" + file);
+}
+
+// 勝敗テキストを人間側・ロボット側それぞれに表示（ロボット側は人間の逆）
+const OPPOSITE = { "勝ち": "負け", "負け": "勝ち", "あいこ": "あいこ" };
+const JUDGE_CLASSES = { "勝ち": "j-win", "負け": "j-lose", "あいこ": "j-draw" };
+
+function setJudge(selector, text, result){
+    $(selector).removeClass("j-win j-lose j-draw")
+               .html(text)
+               .addClass(result ? JUDGE_CLASSES[result] : "");
+}
+function clearJudges(){
+    setJudge("#human_judgement", "", null);
+    setJudge("#robo_judgement", "", null);
+}
+
+// result: 人間から見た勝敗 / humanText: 人間側に出す文言（省略時は result）
+function showResult(result, humanText){
+    setJudge("#human_judgement", humanText || result, result);
+    setJudge("#robo_judgement", OPPOSITE[result], OPPOSITE[result]);
+    $("body").removeClass("result-win result-lose result-draw")
+             .addClass(resultClasses[result]); //背景色で人間の勝敗を表現
+    // ロボットは「手を出した画像」を少し見せてから勝敗のリアクションへ
+    clearTimeout(roboTimer);
+    if (roboImgs[result]) {
+        roboTimer = setTimeout(() => setRoboImg(roboImgs[result]), ROBO_REACTION_DELAY_MS);
+    }
+}
+
+// 手の定義 (0:グー 1:チョキ 2:パー)  robo: ロボットがその手を出した画像
+const HANDS = [
+    { name: "グー",   img: "img/gu2.png",   robo: "gu_v3.jpg"    },
+    { name: "チョキ", img: "img/choki.png", robo: "choki_v3.jpg" },
+    { name: "パー",   img: "img/pa.png",    robo: "par_v3.jpg"   }
+];
+
+// 出した手の画像を表示（hand が null なら空にする）
+function setHandImg(selector, hand){
+    $(selector).html(hand === null ? "" : '<img src="' + HANDS[hand].img + '" alt="' + HANDS[hand].name + '">');
+}
+
+// じゃんけん本体：player = 0/1/2
+function play(player){
+    setHandImg("#human_hand", player);
+
+    const pc = Math.floor(Math.random() * 3);
+    setHandImg("#pc_hand", pc);
+    setRoboImg(HANDS[pc].robo);
+
+    // (player - pc + 3) % 3 → 0:あいこ 1:負け 2:勝ち
+    const diff = (player - pc + 3) % 3;
+    const result = ["あいこ", "負け", "勝ち"][diff];
+    showResult(result);
+    return result;
+}
+
+// ===== カメラ & 手の認識 =====
+const video = document.getElementById("video");
+const canvas = document.getElementById("overlay");
+const ctx = canvas.getContext("2d");
+const drawingUtils = new DrawingUtils(ctx);
+let handLandmarker = null;
+let currentHand = null;   // 現在認識している手 (0/1/2 or null)
+let lastVideoTime = -1;
+
+// 指が伸びているか：指先が第2関節より手首から遠ければ「伸びている」
+function dist(a, b){ return Math.hypot(a.x - b.x, a.y - b.y); }
+function isExtended(lm, tip, pip){
+    return dist(lm[tip], lm[0]) > dist(lm[pip], lm[0]) * 1.1;
+}
+// ランドマークからグー/チョキ/パーを判定
+function classify(lm){
+    const index  = isExtended(lm, 8, 6);
+    const middle = isExtended(lm, 12, 10);
+    const ring   = isExtended(lm, 16, 14);
+    const pinky  = isExtended(lm, 20, 18);
+    const count = [index, middle, ring, pinky].filter(Boolean).length;
+
+    if (index && middle && !ring && !pinky) return 1; // チョキ
+    if (count >= 3) return 2;                          // パー
+    if (count === 0) return 0;                         // グー
+    return null;                                       // 判定できない
+}
+
+async function setup(){
+    try {
+        const vision = await FilesetResolver.forVisionTasks(
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+        );
+        handLandmarker = await HandLandmarker.createFromOptions(vision, {
+            baseOptions: {
+                modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+                delegate: "GPU"
+            },
+            runningMode: "VIDEO",
+            numHands: 1
+        });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        video.addEventListener("loadeddata", () => {
+            $("#status").text("カメラに手をかざしてください");
+            $("#start_btn").prop("disabled", false);
+            requestAnimationFrame(detectLoop);
+        });
+    } catch (e) {
+        console.error(e);
+        $("#status").text("カメラを起動できませんでした：" + e.message);
+    }
+}
+
+function detectLoop(){
+    if (video.currentTime !== lastVideoTime) {
+        lastVideoTime = video.currentTime;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const res = handLandmarker.detectForVideo(video, performance.now());
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (res.landmarks.length > 0) {
+            const lm = res.landmarks[0];
+            drawingUtils.drawConnectors(lm, HandLandmarker.HAND_CONNECTIONS, { color: "#00FF00", lineWidth: 3 });
+            drawingUtils.drawLandmarks(lm, { color: "#FF0000", lineWidth: 1 });
+            currentHand = classify(lm);
+        } else {
+            currentHand = null;
+        }
+        $("#detected_hand").text(currentHand === null ? "-" : HANDS[currentHand].name);
+
+        // 正式な手のタイミングで認識できず待っている間に、手を認識したらその手で勝負
+        if (waitingLate && currentHand !== null) {
+            finishJudge(currentHand);
+        }
+    }
+    requestAnimationFrame(detectLoop);
+}
+
+// ===== 手の確定 & 後出し判定 =====
+const JUDGE_DELAY_MS = 200;  // 「ぽい！」「しょ！」から何秒後の認識結果を正式な手にするか
+const LATE_LIMIT_MS = 300;   // この時間までに手が出ていなければ「後出し」で負け
+let waitingLate = false;     // 正式な手が取れず、後出し判定の期限まで待っている状態
+let lateTimer = null;
+
+// 「ぽい！」「しょ！」の瞬間に呼ぶ
+//   0.2秒後：認識している手があれば、それを正式な手として確定
+//   0.2〜0.3秒：まだ手がなければ待ち、認識できた時点でその手で勝負
+//   0.3秒後：それでも手がなければ「後出し」で負け
+function startJudge(){
+    setTimeout(() => {
+        if (currentHand !== null) {
+            finishJudge(currentHand);
+            return;
+        }
+        waitingLate = true;
+        lateTimer = setTimeout(() => {
+            if (waitingLate) finishJudge(null);
+        }, LATE_LIMIT_MS - JUDGE_DELAY_MS);
+    }, JUDGE_DELAY_MS);
+}
+
+function finishJudge(hand){
+    waitingLate = false;
+    clearTimeout(lateTimer);
+    if (hand === null) {
+        loseByLate();
+        $("#start_btn").prop("disabled", false);
+        return;
+    }
+    const result = play(hand);
+    if (result === "あいこ") {
+        // あいこ → 結果を少し見せてから「あいこでしょ」で自動リピート
+        setTimeout(() => startRound(DRAW_CALLS), DRAW_REPEAT_DELAY_MS);
+    } else {
+        $("#start_btn").prop("disabled", false);
+    }
+}
+
+// 後出しによる負け
+function loseByLate(){
+    setHandImg("#human_hand", null);  // 人間の手はなし
+    const pc = Math.floor(Math.random() * 3);
+    setHandImg("#pc_hand", pc);
+    setRoboImg(HANDS[pc].robo);
+    showResult("負け", "<small>後出しだから</small>負け");
+    $("#status").text("「" + lastCall + "」と同時に手を出そう");
+}
+
+// ===== 掛け声 =====
+const START_CALLS = ["じゃん", "けん", "ぽい！"];
+const DRAW_CALLS  = ["あい", "こで", "しょ！"];
+const CALL_INTERVAL_MS = 800;       // 掛け声の間隔
+const DRAW_REPEAT_DELAY_MS = 1500; // あいこの結果を見せてから「あいこでしょ」に入るまで
+let lastCall = START_CALLS[2];      // 後出し判定の基準になる最後の掛け声
+
+// 1回分のじゃんけん：掛け声を順に表示し、最後の掛け声で手を判定
+function startRound(words){
+    setHandImg("#human_hand", null);
+    setHandImg("#pc_hand", null);
+    clearTimeout(roboTimer);
+    setRoboImg(ROBO_DEFAULT_IMG);  // 勝負前のロボット
+    $("body").removeClass("result-win result-lose result-draw");
+    $("#status").text("カメラに手をかざしてください");
+    clearJudges();
+    lastCall = words[words.length - 1];
+
+    let i = 0;
+    showCall(words[i], false);
+    const timer = setInterval(() => {
+        i++;
+        const isLast = (i === words.length - 1);
+        showCall(words[i], isLast);
+        if (isLast) {
+            clearInterval(timer);
+            startJudge();
+        }
+    }, CALL_INTERVAL_MS);
+}
+
+// 掛け声を1つ表示する（アニメーションを毎回最初から再生）
+//   途中の掛け声：ポンと出てフェードアウト → 次の掛け声との区切りがはっきりする
+//   最後の掛け声：赤く大きくドンと出て、そのまま残る → 「ここで手を出す」瞬間がわかる
+function showCall(word, isLast){
+    const $c = $("#countdown");
+    $c.removeClass("call call-last");
+    void $c[0].offsetWidth;  // リフローさせてアニメーションをリセット
+    $c.text(word).addClass(isLast ? "call-last" : "call");
+}
+
+// スタートボタン：「じゃん・けん・ぽい！」で開始
+$("#start_btn").on("click", function(){
+    $(this).prop("disabled", true);
+    startRound(START_CALLS);
+});
+
+setup();
+</script>
+</body>
+</html>
