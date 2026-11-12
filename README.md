@@ -9,8 +9,7 @@
     - 手の認識モデル
 
 ## ③アプリのデプロイURL
-デプロイしている場合はURLを記入（任意）
-なし
+https://ryoheisudo73.github.io/Janken_Rich/
 
 ## ④アプリのログイン用IDまたはPassword（ある場合）
 - ID: なし
