@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="js/jquery-2.1.3.min.js"></script>
 <link rel="stylesheet" href="css/sample.css">
 <title>じゃんけん</title>
@@ -163,7 +163,7 @@ async function setup(){
             runningMode: "VIDEO",
             numHands: 1
         });
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });  // スマホでは前面(自撮り)カメラ
         video.srcObject = stream;
         video.addEventListener("loadeddata", () => {
             $("#status").text("カメラに手をかざしてください");

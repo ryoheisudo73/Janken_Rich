@@ -6,7 +6,7 @@ body{
     min-height: 100vh;
     /* 枠(カメラ/ロボット)の幅：画面の高さに収まるよう、高さから逆算
        （タイトル・勝敗テキスト・手の画像などの分を差し引く） */
-    --frame-w: min(450px, calc(100vh - 160px));
+    --frame-w: min(450px, calc(100dvh - 160px));  /* dvh: スマホのアドレスバー分も考慮した画面の高さ */
     background: #fff;
     transition: background 0.8s ease, color 0.8s ease;
 }
@@ -24,7 +24,7 @@ main {
     gap: 24px;
     padding: 16px 24px;
     box-sizing: border-box;
-    min-height: 100vh;
+    min-height: 100dvh;
 }
 .side {
     display: flex;
@@ -39,6 +39,7 @@ main {
 /* 左：カメラ（鏡のように左右反転） */
 #camera_area {
     position: relative;
+    container-type: inline-size;  /* 勝敗テキストを枠の幅基準(cqw)で大きさ調整するため */
     width: 100%;
     max-width: var(--frame-w);
     aspect-ratio: 4 / 3;
@@ -62,6 +63,7 @@ main {
 /* 右：ロボット（カメラと同じ枠サイズで対比させる） */
 #robo_frame {
     position: relative;
+    container-type: inline-size;
     width: 100%;
     max-width: var(--frame-w);
     aspect-ratio: 4 / 3;
@@ -89,6 +91,10 @@ main {
     min-width: 0;
     overflow-wrap: anywhere;  /* 長いメッセージでも列幅を広げない */
     align-self: center;  /* 画面の縦中央に配置 */
+}
+#status,
+#detected {
+    font-size: 0.8em;
 }
 /* スタートボタン：ポップなキャンディ風。押せる間はぴょこぴょこ跳ねて誘う */
 #start_btn {
@@ -128,10 +134,12 @@ main {
     display: block;
     white-space: nowrap;
 }
-/* ホバー：少し大きく */
-#start_btn:hover:not(:disabled) {
-    transform: scale(1.06) rotate(-2deg);
-    animation-play-state: paused;
+/* ホバー：少し大きく（マウスのある端末だけ。スマホでタップ後に拡大したまま残らないように） */
+@media (hover: hover) {
+    #start_btn:hover:not(:disabled) {
+        transform: scale(1.06) rotate(-2deg);
+        animation-play-state: paused;
+    }
 }
 /* 押した瞬間：沈み込む */
 #start_btn:active:not(:disabled) {
@@ -166,7 +174,9 @@ main {
     75%      { transform: rotate(15deg) scale(1.1); }
 }
 #countdown {
-    font-size: clamp(64px, 15vh, 120px);  /* 掛け声は大きく */
+    /* 掛け声は大きく。ただし中央の列（幅24vw前後）に「ぽい！」が1行で収まる大きさまで */
+    font-size: max(48px, min(120px, 15vh, 7.5vw));
+    white-space: nowrap;
     font-weight: bold;
     line-height: 1.1;
     min-height: 1.1em;
@@ -230,7 +240,8 @@ main {
     /* 下に向かって濃くなる半透明の帯：画像は透けて見えつつ文字が読める */
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.45) 100%);
     transform-origin: center bottom;
-    font-size: calc(var(--frame-w) / 6);  /* 枠の高さの2割強に収まる大きさ */
+    font-size: calc(var(--frame-w) / 6);  /* 古いブラウザ向けの予備 */
+    font-size: 16cqw;                      /* 枠の実際の幅の16%（どの画面サイズでも枠に収まる） */
     font-weight: 900;
     line-height: 1;
     text-align: center;
@@ -296,4 +307,59 @@ body.result-lose {
 }
 body.result-lose .hand_slot img {
     filter: brightness(0.85);
+}
+
+/* ===== スマホ（縦向き）用レイアウト =====
+   上段：あなた | コンピュータ を左右に並べて対比（PCと同じ左右対称）
+   下段：案内・スタートボタン・掛け声 */
+@media (max-width: 700px) and (orientation: portrait) {
+    body {
+        font-size: 16px;
+        /* 枠の幅 = (画面幅 - 左右の余白12px×2 - 列の間12px) ÷ 2 */
+        --frame-w: calc((100vw - 36px) / 2);
+    }
+    main {
+        grid-template-columns: 1fr 1fr;
+        align-content: start;
+        gap: 12px;
+        padding: 12px;
+    }
+    #human_side { grid-column: 1; grid-row: 1; }
+    #robo_side  { grid-column: 2; grid-row: 1; }
+    #center_area {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        align-self: start;
+        gap: 10px;
+    }
+    .side_title {
+        font-size: 20px;
+    }
+    /* 枠を縦長(3:4)にして、狭い画面でもカメラ映像とロボットを大きく見せる */
+    #camera_area,
+    #robo_frame {
+        aspect-ratio: 3 / 4;
+    }
+    #robo_img {
+        width: 100%;
+        object-fit: cover;
+    }
+    .hand_slot {
+        height: calc(var(--frame-w) / 3);
+    }
+    /* 勝敗テキスト：枠が細いので「後出しだから」は上の行に */
+    .judge {
+        flex-direction: column;
+        align-items: center;
+        font-size: 22cqw;
+    }
+    .judge small {
+        margin-right: 0;
+    }
+    #countdown {
+        font-size: clamp(56px, 18vw, 96px);
+    }
+    #start_btn {
+        font-size: 18px;
+    }
 }
