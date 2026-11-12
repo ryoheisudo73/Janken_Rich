@@ -84,14 +84,24 @@ function clearJudges(){
 
 // result: 人間から見た勝敗 / humanText: 人間側に出す文言（省略時は result）
 function showResult(result, humanText){
-    setJudge("#human_judgement", humanText || result, result);
-    setJudge("#robo_judgement", OPPOSITE[result], OPPOSITE[result]);
-    $("body").removeClass("result-win result-lose result-draw")
-             .addClass(resultClasses[result]); //背景色で人間の勝敗を表現
-    // ロボットは「手を出した画像」を少し見せてから勝敗のリアクションへ
+    // 勝敗テキストと背景色で人間の勝敗を表現
+    const showJudgeAndBackground = () => {
+        setJudge("#human_judgement", humanText || result, result);
+        setJudge("#robo_judgement", OPPOSITE[result], OPPOSITE[result]);
+        $("body").removeClass("result-win result-lose result-draw")
+                 .addClass(resultClasses[result]);
+    };
     clearTimeout(roboTimer);
     if (roboImgs[result]) {
-        roboTimer = setTimeout(() => setRoboImg(roboImgs[result]), ROBO_REACTION_DELAY_MS);
+        // 勝ち・負け：ロボットは「手を出した画像」を少し見せてから勝敗のリアクションへ
+        //   勝敗テキスト・背景色もロボットの画像と同じタイミングで切り替える
+        roboTimer = setTimeout(() => {
+            setRoboImg(roboImgs[result]);
+            showJudgeAndBackground();
+        }, ROBO_REACTION_DELAY_MS);
+    } else {
+        // あいこ：ロボットの画像は変えないので、テキスト・背景はすぐに切り替える
+        showJudgeAndBackground();
     }
 }
 
